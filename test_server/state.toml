@@ -1,0 +1,10 @@
+[users."@foobtech"]
+role = "Owner"
+connection_hours = 200.5
+badges = ["founder"]
+joined = "2026-01-01"
+
+[users."@newbie"]
+role = "Helper"
+connection_hours = 3.0
+badges = []

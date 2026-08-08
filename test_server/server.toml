@@ -1,0 +1,18 @@
+[server]
+name = "my-cozy-server"
+description = "A chill place to hang out"
+
+[[roles]]
+name = "Owner"
+color = "#3e2723"
+can_promote = true
+can_award_badges = true
+
+[[roles]]
+name = "Helper"
+color = "#efebe9"
+can_award_badges = true
+
+[[roles]]
+name = "Resident"
+color = "#8d6e63"
