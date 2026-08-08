@@ -52,6 +52,13 @@ MAX_CONFIG_SIZE = 5 * 1024 * 1024       # matches state.toml's own cap
 MAX_RESOURCE_SIZE = 100 * 1024 * 1024   # matches wallpaper's own cap, the largest category
 FETCH_TIMEOUT_SECONDS = 15
 
+_CATEGORY_PLURAL_TO_SINGULAR = {
+    "themes": "theme",
+    "fonts": "font",
+    "ascii": "ascii",
+    "wallpapers": "wallpaper",
+}
+
 
 class ConnectError(Exception):
     """Network/protocol-level failure — distinct from ServerConfigError/
@@ -126,10 +133,11 @@ def ingest_all_resources(base_url: str, server) -> list[tuple[str, str, bool, st
 
     for category, paths in server.resources.items():
         for rel_path in paths:
-            url = urljoin(base_url + "/", f"resources/{rel_path}")
+            url = urljoin(base_url + "/", f"resources/{category}/{rel_path}")
             try:
                 data = _fetch(url, MAX_RESOURCE_SIZE)
-                cached_path = ingest_asset(server_id, category, rel_path, data)
+                singular_category = _CATEGORY_PLURAL_TO_SINGULAR.get(category, category)
+                cached_path = ingest_asset(server_id, singular_category, rel_path, data)
                 results.append((category, rel_path, True, str(cached_path)))
             except (ConnectError, AssetSecurityError) as e:
                 results.append((category, rel_path, False, str(e)))
