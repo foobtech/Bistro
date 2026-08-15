@@ -72,8 +72,11 @@ def ingest_asset(server_id: str, category: str, relative_path: str, data: bytes)
         tmp.replace(final_path)  # atomic on same filesystem
         return final_path
 
-    # --- theme: just TOML text, no sandbox, but never eval/exec it -----
-    if category == "theme":
+    # --- theme / kitty: just TOML text, no sandbox, but never eval/exec it --
+    # kitty settings (font_family, cursor_shape) get the same treatment as
+    # theme colors: they're parsed as data, never executed, by
+    # bistro_apply_theme.py's load_kitty_config().
+    if category in ("theme", "kitty"):
         final_path.parent.mkdir(parents=True, exist_ok=True)
         tmp = final_path.with_suffix(final_path.suffix + ".tmp")
         tmp.write_bytes(data)
@@ -83,6 +86,15 @@ def ingest_asset(server_id: str, category: str, relative_path: str, data: bytes)
     # --- font / wallpaper: Layer 3, sandboxed processing ----------------
     if category not in SANDBOXED_CATEGORIES:
         raise AssetSecurityError(f"No ingestion path defined for category: {category}")
+
+    # Wallpapers are always transcoded to a fixed h264/mp4 stream by
+    # bistro_sandbox_process.sh regardless of the input container
+    # (gif/png/webm/mp4 in, mp4 out always) — so the cached filename
+    # must reflect that, not whatever extension the server claimed.
+    # Fonts are re-saved in their original format by fontTools, so
+    # they keep their original extension.
+    if category == "wallpaper":
+        final_path = final_path.with_suffix(".mp4")
 
     with tempfile.TemporaryDirectory(prefix="bistro_ingest_") as tmpdir:
         tmp_input = Path(tmpdir) / f"input{ext}"

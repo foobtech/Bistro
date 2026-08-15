@@ -26,6 +26,7 @@ MAX_SIZES = {
     "wallpaper": 100 * 1024 * 1024, # 100 MB — animated loops can be chunky
     "ascii": 256 * 1024,            # 256 KB — plenty for text art
     "theme": 64 * 1024,             # 64 KB — it's just hex codes
+    "kitty": 64 * 1024,             # 64 KB — just font_family/cursor_shape, same size class as theme
 }
 
 ALLOWED_EXTENSIONS = {
@@ -33,6 +34,7 @@ ALLOWED_EXTENSIONS = {
     "wallpaper": {".mp4", ".webm", ".png", ".gif"},
     "ascii": {".txt", ".ans"},
     "theme": {".toml"},
+    "kitty": {".toml"},
 }
 
 # Magic bytes for cheap format sniffing (extension can lie, bytes mostly don't)
@@ -61,7 +63,7 @@ def validate_resource_path(server_id: str, category: str, relative_path: str) ->
 
     server_id: a filesystem-safe identifier for the server (e.g. a hash of
                its connection string), used to namespace caches per-server.
-    category:  one of "font", "wallpaper", "ascii", "theme"
+    category:  one of "font", "wallpaper", "ascii", "theme", "kitty"
     relative_path: the path string as supplied by server.toml / the server
 
     Returns the validated, absolute Path if safe. Raises AssetSecurityError

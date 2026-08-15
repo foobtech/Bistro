@@ -1,0 +1,14 @@
+[Unit]
+Description=Bistro daemon — watches subscribed servers and applies theme/wallpaper/font/ascii updates
+After=graphical-session.target
+
+[Service]
+Type=simple
+# %h expands to the invoking user's home directory — keeps this unit
+# portable across machines instead of hardcoding a username.
+ExecStart=/usr/bin/python3 %h/Bistro/bistro_daemon.py
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=default.target

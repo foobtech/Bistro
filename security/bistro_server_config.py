@@ -74,7 +74,7 @@ class ServerConfig:
     resources: dict[str, list[str]] = field(default_factory=dict)
 
 
-_ALLOWED_RESOURCE_CATEGORIES = {"themes", "fonts", "ascii", "wallpapers"}
+_ALLOWED_RESOURCE_CATEGORIES = {"themes", "fonts", "ascii", "wallpapers", "kitty"}
 
 
 def _validate_str(value, field_name: str, max_len: int) -> str:

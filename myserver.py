@@ -8,6 +8,9 @@ myserver — Bistro's unified server management command.
     myserver promote @actor @target <role>
                                      promote target to a role, if actor
                                      is permitted to do so
+    myserver award @actor @target <badge>
+                                     award target a badge, if actor
+                                     is permitted to do so
 
 This operates on a LOCAL pair of server.toml/state.toml files (the same
 files a real Bistro server would host) — it's the same code a real
@@ -34,6 +37,7 @@ from bistro_server_config import (  # noqa: E402
 )
 from bistro_state_config import (  # noqa: E402
     load_state_config, parse_state_config, StateConfig, UserState, StateConfigError,
+    BADGE_NAME_RE, MAX_BADGES_PER_USER,
 )
 
 
@@ -152,6 +156,56 @@ def cmd_promote(
     return StateConfig(users=new_users)
 
 
+def cmd_award(
+    server: ServerConfig, state: StateConfig, actor: str, target: str, badge: str
+) -> StateConfig:
+    """
+    Award a badge to target, if actor has can_award_badges permission.
+    Same shape as cmd_promote: returns the UPDATED StateConfig, never
+    touches disk itself. Awarding a badge the target already has is a
+    no-op (returns state unchanged) rather than an error — badges have
+    no concept of "duplicate," so there's nothing meaningfully wrong
+    with re-awarding one.
+    """
+    roles = _role_lookup(server)
+
+    if not BADGE_NAME_RE.match(badge):
+        raise MyServerError(
+            f"Invalid badge name {badge!r}: must be lowercase alphanumeric/"
+            f"underscore, 1-32 chars"
+        )
+
+    actor_state = state.users.get(actor)
+    if actor_state is None:
+        raise MyServerError(f"No such user: {actor}")
+    actor_role = roles.get(actor_state.role)
+    if actor_role is None or not actor_role.can_award_badges:
+        raise MyServerError(f"{actor} does not have permission to award badges")
+
+    target_state = state.users.get(target)
+    if target_state is None:
+        raise MyServerError(f"No such user: {target}")
+
+    if badge in target_state.badges:
+        return state
+
+    if len(target_state.badges) >= MAX_BADGES_PER_USER:
+        raise MyServerError(
+            f"{target} already has the maximum of {MAX_BADGES_PER_USER} badges"
+        )
+
+    updated_target = UserState(
+        username=target_state.username,
+        role=target_state.role,
+        connection_hours=target_state.connection_hours,
+        badges=target_state.badges + [badge],
+        joined=target_state.joined,
+    )
+    new_users = dict(state.users)
+    new_users[target] = updated_target
+    return StateConfig(users=new_users)
+
+
 # --- state.toml serialization (write-back for promote) ---------------------
 
 def _toml_escape(s: str) -> str:
@@ -222,6 +276,13 @@ def main(argv: list[str]) -> int:
             new_state = cmd_promote(server, state, rest[1], rest[2], rest[3])
             write_state_config(new_state, state_toml)
             print(f"{rest[2]} promoted to {rest[3]}")
+        elif rest[0] == "award" and len(rest) == 4:
+            new_state = cmd_award(server, state, rest[1], rest[2], rest[3])
+            if new_state is state:
+                print(f"{rest[2]} already has badge '{rest[3]}' — no change")
+            else:
+                write_state_config(new_state, state_toml)
+                print(f"{rest[2]} awarded badge '{rest[3]}'")
         else:
             print(__doc__)
             return 1

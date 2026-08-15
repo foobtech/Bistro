@@ -7,4 +7,4 @@ joined = "2026-01-01"
 [users."@newbie"]
 role = "Helper"
 connection_hours = 3.0
-badges = []
+badges = ["veteran"]
