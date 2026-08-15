@@ -70,8 +70,8 @@ of this, not a replacement for it.
 - [x] Full ingestion pipeline (validate → sandbox → cache)
 - [ ] Community hash/domain blocklist repo
 - [ ] Signed server manifests
-- [ ] Server directory structure (`server.toml` / `state.toml` parsing)
-- [ ] `myserver` command implementation
+- [x] Server directory structure (`server.toml` / `state.toml` parsing)
+- [x] `myserver` command implementation
 
 ## Repo layout
 
